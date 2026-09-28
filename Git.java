@@ -13,7 +13,7 @@ public class Git {
             gitNew.mkdir();
             num++;
         }
-        File INDEX = new File("gitNew");
+        File INDEX = new File("gitNew/INDEX");
         if (!INDEX.exists()) {
             try {
                 INDEX.createNewFile();
@@ -23,14 +23,14 @@ public class Git {
             }
             num++;
         }
-        File objects = new File("gitNew");
+        File objects = new File("gitNew/objects");
         if (!objects.exists()) {
             objects.mkdir();
             num++;
         }
 
         File HEAD = new File("git");
-        if (HEAD.exists()) {
+        if (!HEAD.exists()) {
             try {
                 HEAD.createNewFile();
             } catch (IOException e) {
@@ -39,7 +39,7 @@ public class Git {
             }
             num++;
         }
-        if (num < 4) {
+        if (num > 0) {
             System.out.println("Git Repository Created");
         } else {
             System.out.println("Git Repository Already Exists");
@@ -47,13 +47,21 @@ public class Git {
 
     }
 
-    public void createBlob(File fileAdded) {
-        //read file and turn to string
-        File myFile = f=
-        fileAddedString content = Files.readString(Path.of(fileAdded));
-        String hashFile = hashSHA1(fileAdded);
-
-        
+    public void createBlob(Path FilePath) throws IOException {
+        // read file and turn to string
+        StringBuilder contentOfFile = new StringBuilder();
+        BufferedReader br = Files.newBufferedReader(FilePath);
+        while (br.ready()) {
+            String line = br.readLine();
+            contentOfFile.append(line).append("\n");
+        }
+        br.close();
+        String strContentOfFile = contentOfFile.toString();
+        String hashOfContents = hashSHA1(strContentOfFile);
+        File blobFile = new File("gitNew/objects", hashOfContents);
+        FileWriter fw = new FileWriter(blobFile);
+        fw.write(strContentOfFile);
+        fw.close();
     }
 
     public static String hashSHA1(String input) {
