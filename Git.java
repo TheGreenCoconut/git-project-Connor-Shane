@@ -3,6 +3,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+
 import org.apache.commons.codec.digest.DigestUtils;
 
 public class Git {
@@ -29,7 +31,7 @@ public class Git {
             num++;
         }
 
-        File HEAD = new File("git");
+        File HEAD = new File("gitNew/HEAD");
         if (!HEAD.exists()) {
             try {
                 HEAD.createNewFile();
@@ -56,12 +58,43 @@ public class Git {
             contentOfFile.append(line).append("\n");
         }
         br.close();
+
         String strContentOfFile = contentOfFile.toString();
         String hashOfContents = hashSHA1(strContentOfFile);
         File blobFile = new File("gitNew/objects", hashOfContents);
-        FileWriter fw = new FileWriter(blobFile);
-        fw.write(strContentOfFile);
-        fw.close();
+        FileWriter fwObjects = new FileWriter(blobFile);
+        fwObjects.write(strContentOfFile);
+        fwObjects.close();
+
+        Path pathToIndex = Path.of("gitNew/INDEX");
+        BufferedReader brINDEX = Files.newBufferedReader(pathToIndex);
+        ArrayList<String> linesOfIndex = new ArrayList<>();
+        String pathToString = FilePath.toString();
+        boolean rewriteINDEX = false;
+        while (brINDEX.ready()) {
+            String line = brINDEX.readLine();
+            if (line.endsWith(pathToString)) {
+                linesOfIndex.add(hashOfContents + " " + FilePath);
+                rewriteINDEX = true;
+            } else {
+                linesOfIndex.add(line);
+            }
+        }
+        brINDEX.close();
+
+        if (rewriteINDEX) {
+            FileWriter fwINDEX = new FileWriter("gitNew/INDEX");
+            for (String line : linesOfIndex) {
+                fwINDEX.write(line + "\n");
+            }
+            fwINDEX.close();
+        } else {
+            FileWriter fwINDEX = new FileWriter("gitNew/INDEX", true);
+            // the true means that the data is being appended
+            fwINDEX.write(hashOfContents + " " + FilePath + "\n");
+            fwINDEX.close();
+
+        }
     }
 
     public static String hashSHA1(String input) {
