@@ -8,11 +8,11 @@ import java.util.ArrayList;
 
 public class Git {
     public static void init() {
-        int num = 0;
-        File gitNew = new File("git");
-        if (!gitNew.exists()) {
-            gitNew.mkdir();
-            num++;
+        int count = 0;
+        File gitDir = new File("git");
+        if (!gitDir.exists()) {
+            gitDir.mkdir();
+            count++;
         }
         File INDEX = new File("git/INDEX");
         if (!INDEX.exists()) {
@@ -22,12 +22,12 @@ public class Git {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            num++;
+            count++;
         }
         File objects = new File("git/objects");
         if (!objects.exists()) {
             objects.mkdir();
-            num++;
+            count++;
         }
 
         File HEAD = new File("git/HEAD");
@@ -38,9 +38,9 @@ public class Git {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            num++;
+            count++;
         }
-        if (num > 0) {
+        if (count > 0) {
             System.out.println("Git Repository Created");
         } else {
             System.out.println("Git Repository Already Exists");
@@ -61,32 +61,32 @@ public class Git {
         String strContentOfFile = contentOfFile.toString();
         String hashOfContents = hashSHA1(strContentOfFile);
         File blobFile = new File("git/objects", hashOfContents);
-        FileWriter fwObjects = new FileWriter(blobFile);
-        fwObjects.write(strContentOfFile);
-        fwObjects.close();
+        FileWriter blobWriter = new FileWriter(blobFile);
+        blobWriter.write(strContentOfFile);
+        blobWriter.close();
 
         Path pathToIndex = Path.of("git/INDEX");
-        BufferedReader brINDEX = Files.newBufferedReader(pathToIndex);
+        BufferedReader indexReader = Files.newBufferedReader(pathToIndex);
         ArrayList<String> linesOfIndex = new ArrayList<>();
         String pathToString = FilePath.toString();
-        boolean rewriteINDEX = false;
-        while (brINDEX.ready()) {
-            String line = brINDEX.readLine();
+        boolean fileAlreadyIndexed = false;
+        while (indexReader.ready()) {
+            String line = indexReader.readLine();
             if (line.endsWith(pathToString)) {
                 linesOfIndex.add(hashOfContents + " " + FilePath);
-                rewriteINDEX = true;
+                fileAlreadyIndexed = true;
             } else {
                 linesOfIndex.add(line);
             }
         }
-        brINDEX.close();
+        indexReader.close();
 
-        if (rewriteINDEX) {
-            FileWriter fwINDEX = new FileWriter("git/INDEX");
+        if (fileAlreadyIndexed) {
+            FileWriter indexWriter = new FileWriter("git/INDEX");
             for (String line : linesOfIndex) {
-                fwINDEX.write(line + "\n");
+                indexWriter.write(line + "\n");
             }
-            fwINDEX.close();
+            indexWriter.close();
         } else {
             FileWriter fwINDEX = new FileWriter("git/INDEX", true);
             // the true means that the data is being appended
