@@ -5,17 +5,16 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-import org.apache.commons.codec.digest.DigestUtils;
 
 public class Git {
-    public void init() {
+    public static void init() {
         int num = 0;
-        File gitNew = new File("gitNew");
+        File gitNew = new File("git");
         if (!gitNew.exists()) {
             gitNew.mkdir();
             num++;
         }
-        File INDEX = new File("gitNew/INDEX");
+        File INDEX = new File("git/INDEX");
         if (!INDEX.exists()) {
             try {
                 INDEX.createNewFile();
@@ -25,13 +24,13 @@ public class Git {
             }
             num++;
         }
-        File objects = new File("gitNew/objects");
+        File objects = new File("git/objects");
         if (!objects.exists()) {
             objects.mkdir();
             num++;
         }
 
-        File HEAD = new File("gitNew/HEAD");
+        File HEAD = new File("git/HEAD");
         if (!HEAD.exists()) {
             try {
                 HEAD.createNewFile();
@@ -49,7 +48,7 @@ public class Git {
 
     }
 
-    public void createBlob(Path FilePath) throws IOException {
+    public static void createBlob(Path FilePath) throws IOException {
         // read file and turn to string
         StringBuilder contentOfFile = new StringBuilder();
         BufferedReader br = Files.newBufferedReader(FilePath);
@@ -61,12 +60,12 @@ public class Git {
 
         String strContentOfFile = contentOfFile.toString();
         String hashOfContents = hashSHA1(strContentOfFile);
-        File blobFile = new File("gitNew/objects", hashOfContents);
+        File blobFile = new File("git/objects", hashOfContents);
         FileWriter fwObjects = new FileWriter(blobFile);
         fwObjects.write(strContentOfFile);
         fwObjects.close();
 
-        Path pathToIndex = Path.of("gitNew/INDEX");
+        Path pathToIndex = Path.of("git/INDEX");
         BufferedReader brINDEX = Files.newBufferedReader(pathToIndex);
         ArrayList<String> linesOfIndex = new ArrayList<>();
         String pathToString = FilePath.toString();
@@ -83,13 +82,13 @@ public class Git {
         brINDEX.close();
 
         if (rewriteINDEX) {
-            FileWriter fwINDEX = new FileWriter("gitNew/INDEX");
+            FileWriter fwINDEX = new FileWriter("git/INDEX");
             for (String line : linesOfIndex) {
                 fwINDEX.write(line + "\n");
             }
             fwINDEX.close();
         } else {
-            FileWriter fwINDEX = new FileWriter("gitNew/INDEX", true);
+            FileWriter fwINDEX = new FileWriter("git/INDEX", true);
             // the true means that the data is being appended
             fwINDEX.write(hashOfContents + " " + FilePath + "\n");
             fwINDEX.close();
@@ -97,9 +96,19 @@ public class Git {
         }
     }
 
-    public static String hashSHA1(String input) {
-        String hashed = DigestUtils.sha1Hex(input);
-        return hashed;
+    public static String hashSHA1(String input) throws IOException{
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] hash = digest.digest(input.getBytes());
+            StringBuilder hexString = new StringBuilder();
+                for (byte b : hash) {
+                    hexString.append(String.format("%02x", b));
+                }
+            return hexString.toString();
+        } catch (Exception e) {
+            System.out.println("cant");
+            return null;
+        }
     }
 
 }
