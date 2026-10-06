@@ -21,5 +21,7 @@ public class Verify {
         test2.append("hello");
         test2.close();
         Git.createBlob(e2);
+        Path a = Path.of("testfolder/hello");
+        Git.createBlob(a);
     }
 }

@@ -1,6 +1,7 @@
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -81,6 +82,8 @@ public class Git {
         }
         indexReader.close();
 
+        
+
         if (fileAlreadyIndexed) {
             FileWriter indexWriter = new FileWriter("git/INDEX");
             for (String line : linesOfIndex) {
@@ -90,10 +93,20 @@ public class Git {
         } else {
             FileWriter fwINDEX = new FileWriter("git/INDEX", true);
             // the true means that the data is being appended
-            fwINDEX.write(hashOfContents + " " + FilePath + "\n");
+            Path path = Paths.get(FilePath.toString());
+            fwINDEX.write(hashOfContents + " " + path.toString() + "\n");
             fwINDEX.close();
 
         }
+    }
+
+    public static void add(Path FilePath) throws IOException {
+        createBlob(FilePath);
+    }
+
+    public static void createTree(String input) throws IOException {
+        Path path = Path.of(input);
+        
     }
 
     public static String hashSHA1(String input) throws IOException{
