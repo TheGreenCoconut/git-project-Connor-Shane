@@ -1,21 +1,21 @@
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-import org.apache.commons.codec.digest.DigestUtils;
 
 public class Git {
-    public void init() {
-        int num = 0;
-        File gitNew = new File("gitNew");
-        if (!gitNew.exists()) {
-            gitNew.mkdir();
-            num++;
+    public static void init() {
+        int count = 0;
+        File gitDir = new File("git");
+        if (!gitDir.exists()) {
+            gitDir.mkdir();
+            count++;
         }
-        File INDEX = new File("gitNew/INDEX");
+        File INDEX = new File("git/INDEX");
         if (!INDEX.exists()) {
             try {
                 INDEX.createNewFile();
@@ -23,15 +23,15 @@ public class Git {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            num++;
+            count++;
         }
-        File objects = new File("gitNew/objects");
+        File objects = new File("git/objects");
         if (!objects.exists()) {
             objects.mkdir();
-            num++;
+            count++;
         }
 
-        File HEAD = new File("gitNew/HEAD");
+        File HEAD = new File("git/HEAD");
         if (!HEAD.exists()) {
             try {
                 HEAD.createNewFile();
@@ -39,9 +39,9 @@ public class Git {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            num++;
+            count++;
         }
-        if (num > 0) {
+        if (count > 0) {
             System.out.println("Git Repository Created");
         } else {
             System.out.println("Git Repository Already Exists");
@@ -49,7 +49,7 @@ public class Git {
 
     }
 
-    public void createBlob(Path FilePath) throws IOException {
+    public static void createBlob(Path FilePath) throws IOException {
         // read file and turn to string
         StringBuilder contentOfFile = new StringBuilder();
         BufferedReader br = Files.newBufferedReader(FilePath);
@@ -61,45 +61,190 @@ public class Git {
 
         String strContentOfFile = contentOfFile.toString();
         String hashOfContents = hashSHA1(strContentOfFile);
-        File blobFile = new File("gitNew/objects", hashOfContents);
-        FileWriter fwObjects = new FileWriter(blobFile);
-        fwObjects.write(strContentOfFile);
-        fwObjects.close();
+        File blobFile = new File("git/objects", hashOfContents);
+        FileWriter blobWriter = new FileWriter(blobFile);
+        blobWriter.write(strContentOfFile);
+        blobWriter.close();
 
-        Path pathToIndex = Path.of("gitNew/INDEX");
-        BufferedReader brINDEX = Files.newBufferedReader(pathToIndex);
+        Path pathToIndex = Path.of("git/INDEX");
+        BufferedReader indexReader = Files.newBufferedReader(pathToIndex);
         ArrayList<String> linesOfIndex = new ArrayList<>();
         String pathToString = FilePath.toString();
-        boolean rewriteINDEX = false;
-        while (brINDEX.ready()) {
-            String line = brINDEX.readLine();
+        boolean fileAlreadyIndexed = false;
+        while (indexReader.ready()) {
+            String line = indexReader.readLine();
             if (line.endsWith(pathToString)) {
                 linesOfIndex.add(hashOfContents + " " + FilePath);
-                rewriteINDEX = true;
+                fileAlreadyIndexed = true;
             } else {
                 linesOfIndex.add(line);
             }
         }
-        brINDEX.close();
+        indexReader.close();
 
-        if (rewriteINDEX) {
-            FileWriter fwINDEX = new FileWriter("gitNew/INDEX");
+        
+
+        if (fileAlreadyIndexed) {
+            FileWriter indexWriter = new FileWriter("git/INDEX");
             for (String line : linesOfIndex) {
-                fwINDEX.write(line + "\n");
+                indexWriter.write(line + "\n");
             }
-            fwINDEX.close();
+            indexWriter.close();
         } else {
-            FileWriter fwINDEX = new FileWriter("gitNew/INDEX", true);
+            FileWriter fwINDEX = new FileWriter("git/INDEX", true);
             // the true means that the data is being appended
-            fwINDEX.write(hashOfContents + " " + FilePath + "\n");
+            Path path = Paths.get(FilePath.toString());
+            fwINDEX.write(hashOfContents + " " + path.toString() + "\n");
             fwINDEX.close();
 
         }
     }
 
-    public static String hashSHA1(String input) {
-        String hashed = DigestUtils.sha1Hex(input);
-        return hashed;
+    public static void add(Path FilePath) throws IOException {
+        createBlob(FilePath);
     }
+
+
+
+    public static String hashSHA1(String input) throws IOException{
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] hash = digest.digest(input.getBytes());
+            StringBuilder hexString = new StringBuilder();
+                for (byte b : hash) {
+                    hexString.append(String.format("%02x", b));
+                }
+            return hexString.toString();
+        } catch (Exception e) {
+            System.out.println("cant");
+            return null;
+        }
+    }
+
+    public static String createTree(ArrayList<String> workingList, String dirPath) throws IOException {
+        StringBuilder bcontent = new StringBuilder();
+        // put in parts, for loop
+
+        // then put all together, probably stringbuilder
+        for (String current : workingList) {
+            String[] parts = current.split(" ");
+            String type = parts[0];
+            String hash = parts[1];
+            String path = parts[2];
+            // fix the checks later, add root check
+            String whole = type + " " + hash + " " + path;
+            if (whole.contains(" " + dirPath + "/")) {
+                String name = path.substring(dirPath.length() + 1);
+                String add = type + " " + hash + " " + name + "\n";
+                bcontent.append(add);
+            } else if (dirPath.equals("")) {
+                if (path.contains("/") == false) {
+                    String add = type + " " + hash + " " + path + "\n";
+                    bcontent.append(add);
+                }
+            }
+            
+
+        }
+        String content = bcontent.toString();
+        FileWriter fw = new FileWriter("git/objects/" + hashSHA1(content));
+        fw.write(content);
+        fw.close();
+        return hashSHA1(content);
+    }
+    // count slashes to do done 
+
+    // built list, blob for each done
+
+    //loop: 
+    // sort list done
+    // find deepest path
+    // check if no slashes no slashes then done  done
+    // else go to the deepest folder done
+    // and createtree 
+    // remove from all of the stuff from the workinglist
+    // then add the tree to wokrfjfrjoieefrevreifjrjoiefrjioferjioefojiefrijoferjoiferijoefriojefjoirjfioer
+    public static String createTreeFromIndex() throws IOException {
+
+        ArrayList<String> workingList = new ArrayList<String>();
+        BufferedReader br = new BufferedReader(new FileReader("git/INDEX"));
+        while (br.ready()) {
+            String line = br.readLine().toString();
+            workingList.add("blob " + line);
+        }
+
+        br.close();
+        boolean done = false;
+        while (done == false) {
+            for (int i = 0; i < workingList.size(); i++) {
+                String[] parts = workingList.get(i).split(" ");
+                int min = i;
+                for (int j = i + 1; j < workingList.size(); j++) {
+                    String[] parts2 = workingList.get(j).split(" ");
+                    String check = parts2[2];
+                    String[] parts3 = workingList.get(min).split(" ");
+                    String minp = parts3[2];
+                    if (minp.compareTo(check) > 0) {
+                        min = j;
+                    }
+
+                }  
+                String temp = workingList.get(i);
+                workingList.set(i, workingList.get(min));
+                workingList.set(min, temp);
+
+            }
+
+            int maxslash = 0;
+            String deep = "";
+            for (int i = 0; i < workingList.size(); i++) {
+                String[] parts = workingList.get(i).split(" ");
+                String path = parts[2];
+                if (numSlashes(path) > maxslash) {
+                    maxslash = numSlashes(path);
+                    deep = path;
+                }
+            }
+
+            if (maxslash == 0) {
+                return createTree(workingList, "");
+            } else {
+                int last = 0;
+                for (int j = 0; j < deep.length(); j++) {
+                    if (deep.substring(j, j + 1).equals("/")) {
+                        last = j;
+                    }
+                }
+                String dir = deep.substring(0, last);
+                String tree = createTree(workingList, dir);
+                
+
+                int temp = 0;
+                for (int i = workingList.size() - 1; i > -1; i--) {
+                    if (workingList.get(i).contains(" " + dir + "/")) {
+                        workingList.remove(i);
+                        temp = i;
+                    }
+                }
+
+
+                workingList.add(temp, "tree " + tree + " " + dir);
+            }
+
+        }
+
+        return "";
+    }
+
+    public static int numSlashes(String input) {
+        int count = 0;
+        for (int i = 0; i < input.length(); i++) {
+            if (input.substring(i, i + 1).equals("/")) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
 
 }
