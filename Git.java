@@ -104,10 +104,7 @@ public class Git {
         createBlob(FilePath);
     }
 
-    public static void createTree(String input) throws IOException {
-        Path path = Path.of(input);
-        
-    }
+
 
     public static String hashSHA1(String input) throws IOException{
         try {
@@ -123,5 +120,38 @@ public class Git {
             return null;
         }
     }
+
+    public static String createTree(ArrayList<String> workingList, String dirPath) throws IOException {
+        StringBuilder bcontent = new StringBuilder();
+        // put in parts, for loop
+
+        // then put all together, probably stringbuilder
+        for (String current : workingList) {
+            String[] parts = current.split(" ");
+            String type = parts[0];
+            String hash = parts[1];
+            String path = parts[2];
+            // fix the checks later, add root check
+            String whole = type + " " + hash + " " + path;
+            if (whole.contains(" " + dirPath + "/")) {
+                String name = path.substring(dirPath.length() + 1);
+                String add = type + " " + hash + " " + name + "\n";
+                bcontent.append(add);
+            } else if (dirPath.equals("")) {
+                if (path.contains("/") == false) {
+                    String add = type + " " + hash + " " + path + "\n";
+                    bcontent.append(add);
+                }
+            }
+            
+
+        }
+        String content = bcontent.toString();
+        FileWriter fw = new FileWriter("git/objects/" + hashSHA1(content));
+        fw.write(content);
+        fw.close();
+        return hashSHA1(content);
+    }
+
 
 }
