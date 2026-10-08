@@ -152,6 +152,99 @@ public class Git {
         fw.close();
         return hashSHA1(content);
     }
+    // count slashes to do done 
+
+    // built list, blob for each done
+
+    //loop: 
+    // sort list done
+    // find deepest path
+    // check if no slashes no slashes then done  done
+    // else go to the deepest folder done
+    // and createtree 
+    // remove from all of the stuff from the workinglist
+    // then add the tree to wokrfjfrjoieefrevreifjrjoiefrjioferjioefojiefrijoferjoiferijoefriojefjoirjfioer
+    public static String createTreeFromIndex() throws IOException {
+
+        ArrayList<String> workingList = new ArrayList<String>();
+        BufferedReader br = new BufferedReader(new FileReader("git/INDEX"));
+        while (br.ready()) {
+            String line = br.readLine().toString();
+            workingList.add("blob " + line);
+        }
+
+        br.close();
+        boolean done = false;
+        while (done == false) {
+            for (int i = 0; i < workingList.size(); i++) {
+                String[] parts = workingList.get(i).split(" ");
+                int min = i;
+                for (int j = i + 1; j < workingList.size(); j++) {
+                    String[] parts2 = workingList.get(j).split(" ");
+                    String check = parts2[2];
+                    String[] parts3 = workingList.get(min).split(" ");
+                    String minp = parts3[2];
+                    if (minp.compareTo(check) > 0) {
+                        min = j;
+                    }
+
+                }  
+                String temp = workingList.get(i);
+                workingList.set(i, workingList.get(min));
+                workingList.set(min, temp);
+
+            }
+
+            int maxslash = 0;
+            String deep = "";
+            for (int i = 0; i < workingList.size(); i++) {
+                String[] parts = workingList.get(i).split(" ");
+                String path = parts[2];
+                if (numSlashes(path) > maxslash) {
+                    maxslash = numSlashes(path);
+                    deep = path;
+                }
+            }
+
+            if (maxslash == 0) {
+                return createTree(workingList, "");
+            } else {
+                int last = 0;
+                for (int j = 0; j < deep.length(); j++) {
+                    if (deep.substring(j, j + 1).equals("/")) {
+                        last = j;
+                    }
+                }
+                String dir = deep.substring(0, last);
+                String tree = createTree(workingList, dir);
+                
+
+                int temp = 0;
+                for (int i = workingList.size() - 1; i > -1; i--) {
+                    if (workingList.get(i).contains(" " + dir + "/")) {
+                        workingList.remove(i);
+                        temp = i;
+                    }
+                }
+
+
+                workingList.add(temp, "tree " + tree + " " + dir);
+            }
+
+        }
+
+        return "";
+    }
+
+    public static int numSlashes(String input) {
+        int count = 0;
+        for (int i = 0; i < input.length(); i++) {
+            if (input.substring(i, i + 1).equals("/")) {
+                count += 1;
+            }
+        }
+        return count;
+    }
 
 
 }
