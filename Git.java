@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 
 
 public class Git {
@@ -59,6 +60,11 @@ public class Git {
         }
         br.close();
 
+        contentOfFile.delete(contentOfFile.length() - 1, contentOfFile.length()); // PEER-REVIEW:
+                                                                                  // Removed the
+                                                                                  // trailing
+                                                                                  // whitespace
+
         String strContentOfFile = contentOfFile.toString();
         String hashOfContents = hashSHA1(strContentOfFile);
         File blobFile = new File("git/objects", hashOfContents);
@@ -82,19 +88,31 @@ public class Git {
         }
         indexReader.close();
 
-        
+
 
         if (fileAlreadyIndexed) {
             FileWriter indexWriter = new FileWriter("git/INDEX");
-            for (String line : linesOfIndex) {
-                indexWriter.write(line + "\n");
+            // for (String line : linesOfIndex) {
+            // indexWriter.write(line + "\n");
+            // }
+            for (int line = 0; line < linesOfIndex.size(); line++) {
+                indexWriter.write(linesOfIndex.get(line));
+                if (line != linesOfIndex.size() - 1) {
+                    indexWriter.write("\n");
+                }
             }
             indexWriter.close();
         } else {
             FileWriter fwINDEX = new FileWriter("git/INDEX", true);
             // the true means that the data is being appended
             Path path = Paths.get(FilePath.toString());
-            fwINDEX.write(hashOfContents + " " + path.toString() + "\n");
+            FileReader frINDEX = new FileReader("git/INDEX");
+            if (frINDEX.read() == -1) { // PEER-REVIEW: Handles trailing whitespace in INDEX
+                fwINDEX.write(hashOfContents + " " + path.toString());
+            } else {
+                fwINDEX.write("\n" + hashOfContents + " " + path.toString());
+            }
+            frINDEX.close();
             fwINDEX.close();
 
         }
@@ -106,14 +124,14 @@ public class Git {
 
 
 
-    public static String hashSHA1(String input) throws IOException{
+    public static String hashSHA1(String input) throws IOException {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
             byte[] hash = digest.digest(input.getBytes());
             StringBuilder hexString = new StringBuilder();
-                for (byte b : hash) {
-                    hexString.append(String.format("%02x", b));
-                }
+            for (byte b : hash) {
+                hexString.append(String.format("%02x", b));
+            }
             return hexString.toString();
         } catch (Exception e) {
             System.out.println("cant");
@@ -121,7 +139,8 @@ public class Git {
         }
     }
 
-    public static String createTree(ArrayList<String> workingList, String dirPath) throws IOException {
+    public static String createTree(ArrayList<String> workingList, String dirPath)
+            throws IOException {
         StringBuilder bcontent = new StringBuilder();
         // put in parts, for loop
 
@@ -143,27 +162,28 @@ public class Git {
                     bcontent.append(add);
                 }
             }
-            
+
 
         }
-        String content = bcontent.toString();
+        String content = bcontent.toString().substring(0, bcontent.length() - 1);
         FileWriter fw = new FileWriter("git/objects/" + hashSHA1(content));
         fw.write(content);
         fw.close();
         return hashSHA1(content);
     }
-    // count slashes to do done 
+    // count slashes to do done
 
     // built list, blob for each done
 
-    //loop: 
+    // loop:
     // sort list done
     // find deepest path
-    // check if no slashes no slashes then done  done
+    // check if no slashes no slashes then done done
     // else go to the deepest folder done
-    // and createtree 
+    // and createtree
     // remove from all of the stuff from the workinglist
-    // then add the tree to wokrfjfrjoieefrevreifjrjoiefrjioferjioefojiefrijoferjoiferijoefriojefjoirjfioer
+    // then add the tree to
+    // wokrfjfrjoieefrevreifjrjoiefrjioferjioefojiefrijoferjoiferijoefriojefjoirjfioer
     public static String createTreeFromIndex() throws IOException {
 
         ArrayList<String> workingList = new ArrayList<String>();
@@ -188,7 +208,7 @@ public class Git {
                         min = j;
                     }
 
-                }  
+                }
                 String temp = workingList.get(i);
                 workingList.set(i, workingList.get(min));
                 workingList.set(min, temp);
@@ -217,7 +237,7 @@ public class Git {
                 }
                 String dir = deep.substring(0, last);
                 String tree = createTree(workingList, dir);
-                
+
 
                 int temp = 0;
                 for (int i = workingList.size() - 1; i > -1; i--) {
