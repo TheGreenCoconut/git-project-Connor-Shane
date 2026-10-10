@@ -10,11 +10,11 @@ import java.util.HexFormat;
 
 public class Git {
     public static void init() {
-        int count = 0;
+        int filesCreated = 0;
         File gitDir = new File("git");
         if (!gitDir.exists()) {
             gitDir.mkdir();
-            count++;
+            filesCreated++;
         }
         File INDEX = new File("git/INDEX");
         if (!INDEX.exists()) {
@@ -24,12 +24,12 @@ public class Git {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            count++;
+            filesCreated++;
         }
         File objects = new File("git/objects");
         if (!objects.exists()) {
             objects.mkdir();
-            count++;
+            filesCreated++;
         }
 
         File HEAD = new File("git/HEAD");
@@ -40,9 +40,9 @@ public class Git {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            count++;
+            filesCreated++;
         }
-        if (count > 0) {
+        if (filesCreated > 0) {
             System.out.println("Git Repository Created");
         } else {
             System.out.println("Git Repository Already Exists");
@@ -216,13 +216,13 @@ public class Git {
             }
 
             int maxslash = 0;
-            String deep = "";
+            String deepestPath = "";
             for (int i = 0; i < workingList.size(); i++) {
                 String[] parts = workingList.get(i).split(" ");
                 String path = parts[2];
                 if (numSlashes(path) > maxslash) {
                     maxslash = numSlashes(path);
-                    deep = path;
+                    deepestPath = path;
                 }
             }
 
@@ -230,20 +230,20 @@ public class Git {
                 return createTree(workingList, "");
             } else {
                 int last = 0;
-                for (int j = 0; j < deep.length(); j++) {
-                    if (deep.substring(j, j + 1).equals("/")) {
+                for (int j = 0; j < deepestPath.length(); j++) {
+                    if (deepestPath.substring(j, j + 1).equals("/")) {
                         last = j;
                     }
                 }
-                String dir = deep.substring(0, last);
+                String dir = deepestPath.substring(0, last);
                 String tree = createTree(workingList, dir);
 
 
                 int temp = 0;
-                for (int i = workingList.size() - 1; i > -1; i--) {
-                    if (workingList.get(i).contains(" " + dir + "/")) {
-                        workingList.remove(i);
-                        temp = i;
+                for (int line = workingList.size() - 1; line > -1; line--) {
+                    if (workingList.get(line).contains(" " + dir + "/")) {
+                        workingList.remove(line);
+                        temp = line;
                     }
                 }
 
